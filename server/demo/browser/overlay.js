@@ -108,7 +108,7 @@ export function mountOverlay({ fabBottom = null } = {}) {
   let tab = 'roles', open = false, filter = 'all', session = null, me = null;
 
   const toast = (t, err) => { const el = $('#toast'); el.textContent = t; el.className = 'toast on' + (err ? ' err' : ''); clearTimeout(el._t); el._t = setTimeout(() => { el.className = 'toast'; }, err ? 5000 : 2600); };
-  const seen = () => Number(localStorage.getItem('sp2demo:feedSeen') || 0);
+  const seen = () => Number(localStorage.getItem(`${globalThis.__DEMO_NS__ || 'sp2demo'}:feedSeen`) || 0);
   const badge = () => {
     const mine = demo.feed.filter(m => m.at > seen() && (!me || filter === 'all' || m.chatId === me));
     const bd = $('#bd'); bd.hidden = !mine.length; bd.textContent = mine.length > 99 ? '99+' : mine.length;
@@ -143,7 +143,7 @@ export function mountOverlay({ fabBottom = null } = {}) {
           const kb = m.buttons ? `<div class="kb">${m.buttons.flat().map(b => `<button data-msg="${m.id}" data-btn="${esc(b.data)}">${esc(b.text)}<small>нажать за: ${esc(w.name.split(' ')[0])}</small></button>`).join('')}</div>` : '';
           return `<div class="msg ${m.at > s ? 'new' : ''}"><div class="to">→ ${esc(w.name)}${w.role ? ` · ${esc(w.role)}` : ''}<span>${t}</span></div>${tgHtml(m.text)}${kb}</div>`;
         }).join('') : `<div class="empty">Пока сообщений нет. Сделайте что-нибудь в админке — например, подтвердите бронь с трансфером.</div>`);
-      localStorage.setItem('sp2demo:feedSeen', String(Date.now())); badge();
+      localStorage.setItem(`${globalThis.__DEMO_NS__ || 'sp2demo'}:feedSeen`, String(Date.now())); badge();
     } else {
       body.innerHTML = `<div class="note">Это <b>демо</b> серверной версии Сутки·Pro. Работает целиком в вашем браузере: тот же код сервера, что в папке <code>server/</code>, только «база» хранится в браузере.</div>
         <p style="font-size:13.5px;color:#334155;line-height:1.5">Данные видите только вы — они хранятся <b>только в этом браузере</b>. Настоящих оплат, Telegram-бота, SMS и хостинга нет: сообщения бота показываются во вкладке «Telegram (демо)».</p>

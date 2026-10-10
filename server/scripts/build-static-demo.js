@@ -83,7 +83,7 @@ fs.mkdirSync(path.join(out, 'demo', 'assets'), { recursive: true });
 const result = await esbuild.build({
   entryPoints: [rel('demo', 'browser', 'entry.js')], bundle: true, format: 'esm', platform: 'browser', target: ['es2020', 'safari15'],
   outfile: path.join(out, 'demo', 'demo.js'), minify: true, legalComments: 'none', charset: 'utf8', metafile: true,
-  plugins: [demoPlugin], define: { 'process.env.NODE_ENV': '"production"', 'globalThis.__DEMO_DATA_VERSION__': JSON.stringify(version) },
+  plugins: [demoPlugin], define: { 'process.env.NODE_ENV': '"production"', 'globalThis.__DEMO_DATA_VERSION__': JSON.stringify(version), 'globalThis.__DEMO_NS__': JSON.stringify(process.env.DEMO_NS || '') },
   logLevel: 'warning',
 });
 const bytes = fs.statSync(path.join(out, 'demo', 'demo.js')).size;
@@ -135,6 +135,13 @@ fs.copyFileSync(path.join(repo, 'assets', 'photos', 'highvill-g1-1200.jpg'), pat
 fs.copyFileSync(path.join(repo, 'assets', 'brand', 'pin-silver-128.png'), path.join(out, 'demo', 'assets', 'pin-silver-128.png'));
 
 // 5) главная страница демо
-fs.copyFileSync(rel('demo', 'landing', 'index.html'), path.join(out, 'index.html'));
+if (process.env.DEMO_SITE === 'guest') {
+  // сайт гостя в корне (DEMO_SITE=guest): index.html — бронь гостя, team.html — главная демо команды (роли, сценарии)
+  fs.copyFileSync(rel('demo', 'guest', 'index.html'), path.join(out, 'index.html'));
+  const land = fs.readFileSync(rel('demo', 'landing', 'index.html'), 'utf8');
+  if (!land.includes('<a class="btn" href="../">Старый прототип</a>')) throw new Error('landing: не нашёл ссылку «Старый прототип»');
+  fs.writeFileSync(path.join(out, 'team.html'), land.replace('<a class="btn" href="../">Старый прототип</a>', '<a class="btn" href="./">Сайт гостя</a>'));
+  fs.writeFileSync(path.join(out, '.nojekyll'), '');
+} else fs.copyFileSync(rel('demo', 'landing', 'index.html'), path.join(out, 'index.html'));
 fs.writeFileSync(path.join(out, 'demo', 'VERSION'), `${version}\n`);
 console.log(`Демо собрано: ${path.relative(repo, out)}/ (demo.js ${(bytes / 1024).toFixed(0)} КБ, версия данных ${version})`);

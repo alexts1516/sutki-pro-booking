@@ -16,8 +16,11 @@ import { runSeed } from '../../prisma/seed.js';
 import { createTestPayments } from '../../src/payments/test.js';
 
 const DATA_VERSION = globalThis.__DEMO_DATA_VERSION__ || 'dev';
-const IDB_NAME = 'sutki-pro-demo-v2', IDB_STORE = 'state', IDB_KEY = 'main';
-const LS = { rev: 'sp2demo:rev', cookie: 'sp2demo:cookie', seen: 'sp2demo:feedSeen' };
+// пространство имён хранилища браузера задаётся при сборке (DEMO_NS): разные сайты на одном домене github.io не делят данные
+const NS = globalThis.__DEMO_NS__ || '';
+const IDB_NAME = NS ? `${NS}-db` : 'sutki-pro-demo-v2', IDB_STORE = 'state', IDB_KEY = 'main';
+const LP = NS || 'sp2demo';
+const LS = { rev: `${LP}:rev`, cookie: `${LP}:cookie`, seen: `${LP}:feedSeen` };
 const quiet = { log() {}, warn() {}, error: (...a) => console.warn('[демо]', ...a) };
 
 // ---------- хранение в браузере ----------

@@ -4,6 +4,6 @@ import { demo } from './backend.js';
 import { mountOverlay, goRole, ROLES, tgHtml } from './overlay.js';
 
 globalThis.SutkiDemoUI = { mountOverlay, goRole, ROLES, tgHtml };
-const start = () => mountOverlay();
+const start = () => { if (!document.documentElement.hasAttribute('data-demo-guest')) mountOverlay(); };   // сайт гостя — без панели демо
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 export { demo };
