@@ -137,8 +137,9 @@ fs.copyFileSync(path.join(repo, 'assets', 'brand', 'pin-silver-128.png'), path.j
 // 5) главная страница демо
 if (process.env.DEMO_SITE === 'guest') {
   // сайт гостя в корне (DEMO_SITE=guest): index.html — бронь гостя, team.html — главная демо команды (роли, сценарии)
-  // корень — исходный сайт гостя прототипа (коммит b9de0ba, 1 окт 2026, до ребрендинга): demo/guest-original (своя бронь в localStorage)
+  // корень — последний сайт гостя прототипа «The Address · Apart Hotel» (коммит a90ef69, 1 окт 2026): demo/guest-original (своя бронь в localStorage)
   fs.copyFileSync(rel('demo', 'guest-original', 'index.html'), path.join(out, 'index.html'));
+  fs.rmSync(path.join(out, 'assets'), { recursive: true, force: true });
   fs.cpSync(rel('demo', 'guest-original', 'assets'), path.join(out, 'assets'), { recursive: true });
   fs.copyFileSync(rel('demo', 'guest', 'index.html'), path.join(out, 'booking.html'));   // сайт гостя на API прохода 4 (только карта, удержание 30 мин)
   const land = fs.readFileSync(rel('demo', 'landing', 'index.html'), 'utf8');
