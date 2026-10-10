@@ -1,138 +1,111 @@
 <!DOCTYPE html>
-<html lang="ru" data-demo-guest>
+<html lang="ru">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#4f46e5">
-<title>Astana Stay — квартиры посуточно (демо Сутки·Pro)</title>
-<link rel="icon" href="data:,">
-<!-- Сайт гостя статического демо (DEMO_SITE=guest): тот же публичный API сервера (/api/public/<аккаунт>/…), работающий в браузере.
-     Бронь — только с оплатой картой; неоплаченная заявка держит даты 30 мин; «оплата» — тестовая (без банка). -->
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;background:#f1f5f9;color:#0f172a;-webkit-text-size-adjust:100%}
-.wrap{max-width:960px;margin:0 auto;padding:16px 14px 60px}
-header{display:flex;gap:10px;align-items:center;margin:4px 0 14px}
-.logo{width:42px;height:42px;border-radius:12px;background:#4f46e5;color:#fff;font-weight:800;font-size:22px;display:flex;align-items:center;justify-content:center;flex:none}
-h1{font-size:21px;margin:0}header small{color:#64748b;font-size:13px}
-.grow{flex:1}.muted{color:#64748b;font-size:13.5px}
-.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;margin:12px 0}
-.notice{background:#fefce8;border-color:#fde68a;font-size:14px;line-height:1.45}
-.search{display:grid;grid-template-columns:1fr 1fr 110px;gap:10px;align-items:end}
-.search>*{min-width:0}
-@media(max-width:560px){.search{grid-template-columns:1fr 1fr}.search .g{grid-column:1/-1}}
-label{display:block;font-size:13px;color:#475569;font-weight:600}
-input,select{width:100%;margin-top:4px;padding:11px;border:1px solid #cbd5e1;border-radius:11px;font:inherit;font-size:16px;background:#fff}
-input[type=checkbox]{width:auto;margin:0 8px 0 0}
-.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
-.apt{background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
-.apt img{width:100%;height:160px;object-fit:cover;background:#e2e8f0;display:block}
-.apt .b{padding:12px;display:flex;flex-direction:column;gap:4px;flex:1}
-.apt b{font-size:15.5px}.price{font-weight:800;font-size:17px;margin-top:auto}
-.busy{opacity:.55}
-.btn{border:1px solid #cbd5e1;background:#fff;border-radius:11px;padding:11px 14px;font:inherit;font-weight:650;cursor:pointer;color:inherit;text-decoration:none;display:inline-block;text-align:center}
-.btn.primary{background:#4f46e5;border-color:#4f46e5;color:#fff}.btn:disabled{opacity:.55;cursor:default}.btn.block{width:100%}
-.ok{background:#dcfce7;color:#166534;border-radius:12px;padding:12px;margin-top:10px}
-.err{background:#fee2e2;color:#991b1b;border-radius:12px;padding:12px;margin-top:10px}
-.hold{background:#e0f2fe;color:#075985;border-radius:12px;padding:12px;margin-top:10px}
-dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:8px 0}dt{color:#64748b;font-size:13.5px}dd{margin:0;font-weight:600}
-.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}
-footer{margin-top:24px;font-size:13px;color:#64748b;text-align:center}footer a{color:#4f46e5}
-</style>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230b3b4a'/%3E%3Ctext x='16' y='22.5' font-size='18' text-anchor='middle' fill='white' font-family='Arial,sans-serif' font-weight='700'%3EA%3C/text%3E%3C/svg%3E">
+<meta name="theme-color" content="#0b3b4a">
+<title>Astana Stay — квартиры посуточно в Астане (демо)</title>
+<link rel="stylesheet" href="assets/guest.css">
 </head>
 <body>
-<div class="wrap">
-  <header><div class="logo">A</div><div class="grow"><h1>Astana Stay</h1><small>Квартиры посуточно в Астане · ЖК Хайвил</small></div></header>
-  <div class="card notice">Это <b>демо</b>: сайт работает целиком в вашем браузере, данные вымышленные, <b>оплата тестовая — деньги не списываются</b>.</div>
-  <div id="status" class="muted">Загружаем квартиры…</div>
+<div class="demo-ribbon"><b>Демо-данные</b> · сайт-пример для презентации: квартиры, цены и отзывы вымышленные, оплата не проводится</div>
+<header class="site">
+  <div class="wrap hdr">
+    <a class="logo" href="./"><span class="logo-mk" id="logoMk" data-brand="logo"></span><span><b data-brand="name">Astana Stay</b><small data-brand="tagline">квартиры посуточно</small></span></a>
+    <nav class="hnav"><a href="#catalog">Квартиры</a><a href="#map">Карта</a><a href="#transfer">Трансфер</a><a href="#how">Как забронировать</a><a href="#contacts">Контакты</a></nav>
+    <button type="button" class="sbar" id="sbar" hidden aria-label="Изменить поиск"></button>
+    <div class="hright"><div class="lsw" id="lsw"></div><a class="btn brand sm hbook" href="#catalog">Забронировать</a><button type="button" class="burger" id="burger" aria-label="Меню" aria-expanded="false" aria-controls="mnav"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
+  </div>
+  <nav class="mnav" id="mnav" hidden aria-label="Меню"><div class="wrap"><a href="#catalog">Квартиры</a><a href="#map">Карта</a><a href="#transfer">Трансфер</a><a href="#how">Как забронировать</a><a href="#contacts">Контакты</a><a class="btn brand block" href="#catalog">Забронировать</a></div></nav>
+</header>
 
-  <section id="searchView">
-    <div class="card search">
-      <label>Заезд<input type="date" id="ci"></label>
-      <label>Выезд<input type="date" id="co"></label>
-      <label class="g">Гостей<select id="gs"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></label>
-    </div>
-    <div class="list" id="list"></div>
-  </section>
+<section class="hero">
+  <div class="hero-sky" id="sky"></div>
+  <div class="wrap hero-in">
+    <span class="kicker" id="kicker"></span>
+    <h1>Квартиры посуточно в&nbsp;Астане — как дома, только лучше</h1>
+    <p>Большинство квартир — в ЖК Хайвил в центре Астаны, рядом с посольством США. Заселение 24/7 через кодовый замок, можно с питомцами, трансфер из аэропорта с табличкой.</p>
+  </div>
+</section>
 
-  <section id="bookView" hidden></section>
-
-  <footer>Сутки·Pro — демо · <a href="team.html">Как это видит команда (владелец, админ, водитель…)</a></footer>
+<div class="wrap search">
+  <form class="search-card" id="searchForm" novalidate></form>
+  <div class="perks" id="perks"></div>
 </div>
-<script type="module">
-import { demo } from './demo/demo.js';
-const API = '/api/public/astana-stay';
-const $ = (s) => document.querySelector(s);
-const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const kzt = (n) => Math.round(n || 0).toLocaleString('ru-RU') + ' ₸';
-const iso = (d) => new Date(Date.now() + d * 86400000 + 5 * 3600000).toISOString().slice(0, 10);
-const day = (s) => new Date(s + 'T00:00:00Z').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' });
-const time = (s) => new Date(s).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-async function call(path, body) {
-  const r = await fetch(API + path, body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  const d = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error((d.error || `Ошибка ${r.status}`) + (d.details ? ': ' + d.details.map(x => x.message).join(', ') : ''));
-  return d;
-}
-let apts = [];
-$('#ci').value = iso(4); $('#co').value = iso(6);
-$('#ci').min = $('#co').min = iso(0);
 
-async function search() {
-  const ci = $('#ci').value, co = $('#co').value, gs = $('#gs').value;
-  if (!ci || !co || co <= ci) { $('#status').textContent = 'Выберите даты: выезд позже заезда'; $('#list').innerHTML = ''; return; }
-  apts = await call(`/apartments?checkIn=${ci}&checkOut=${co}&guests=${gs}`);
-  apts.sort((a, b) => (b.available !== false) - (a.available !== false));
-  const free = apts.filter(a => a.available !== false).length;
-  $('#status').textContent = `${day(ci)} — ${day(co)}: свободно ${free} из ${apts.length}`;
-  $('#list').innerHTML = apts.map(a => `<div class="apt ${a.available === false ? 'busy' : ''}">
-    ${a.cover ? `<img src="${esc(a.cover.url)}" alt="" loading="lazy">` : '<img alt="">'}
-    <div class="b"><b>${esc(a.title)}</b><span class="muted">${esc(a.rooms)} · до ${a.maxGuests} гостей${a.areaM2 ? ` · ${a.areaM2} м²` : ''}</span>
-    <span class="muted">${esc(a.address)}</span>
-    <div class="price">${a.quote ? `${kzt(a.quote.totalKzt)} <span class="muted">за ${a.quote.nights} ноч.</span>` : `${kzt(a.basePriceKzt)} <span class="muted">/ ночь</span>`}</div>
-    ${a.available === false ? '<button class="btn block" disabled>Занято на эти даты</button>' : `<button class="btn primary block" data-book="${esc(a.id)}">Забронировать</button>`}</div></div>`).join('');
-}
-['ci', 'co', 'gs'].forEach(id => $('#' + id).addEventListener('change', () => search().catch(e => { $('#status').textContent = e.message; })));
+<section class="blk" id="catalog">
+  <div class="wrap">
+    <div class="sec-h"><div><h2>Наши квартиры</h2><p id="resInfo"></p></div>
+      <div class="tools"><div class="chips" id="roomChips"></div>
+        <select class="sort" id="sort" aria-label="Сортировка"><option value="pop">Сначала популярные</option><option value="cheap">Сначала дешевле</option><option value="exp">Сначала дороже</option><option value="rate">По рейтингу</option></select></div></div>
+    <div class="grid" id="grid"></div>
+  </div>
+</section>
 
-function showForm(a) {
-  const ci = $('#ci').value, co = $('#co').value;
-  $('#searchView').hidden = true; const v = $('#bookView'); v.hidden = false; window.scrollTo(0, 0);
-  v.innerHTML = `<div class="card"><button class="btn" id="back">← К списку</button>
-    <h2 style="margin:12px 0 4px">${esc(a.title)}</h2><div class="muted">${esc(a.rooms)} · ${esc(a.address)}</div>
-    <dl><dt>Заезд</dt><dd>${day(ci)}</dd><dt>Выезд</dt><dd>${day(co)}</dd><dt>Гостей</dt><dd>${$('#gs').value}</dd><dt>Сумма</dt><dd>${kzt(a.quote?.totalKzt)}</dd><dt>Оплата</dt><dd>картой онлайн (на сайте — только с оплатой)</dd></dl>
-    <form id="f" novalidate>
-      <div class="row"><label>Имя<input id="nm" autocomplete="name" placeholder="Анна Смирнова"></label><label>Телефон<input id="ph" type="tel" autocomplete="tel" placeholder="+7 701 555 12 34"></label></div>
-      <label style="margin-top:10px">Почта (необязательно)<input id="em" type="email" autocomplete="email"></label>
-      <label style="margin-top:10px;display:flex;align-items:center"><input type="checkbox" id="early"> Хочу заехать пораньше — в 10:00 (согласует администратор)</label>
-      <button class="btn primary block" id="go" style="margin-top:12px">Забронировать и перейти к оплате</button>
-    </form><div id="res"></div>
-    <p class="muted">Нужны особые условия (наличные, залог)? Напишите нам — владелец пришлёт личную ссылку.</p></div>`;
-  $('#back').onclick = () => { v.hidden = true; $('#searchView').hidden = false; search(); };
-  $('#f').onsubmit = async (e) => {
-    e.preventDefault(); const btn = $('#go'); if (btn.disabled) return; btn.disabled = true; $('#res').innerHTML = '';
-    try {
-      const b = await call('/bookings', { apartmentId: a.id, checkIn: ci, checkOut: co, guests: Number($('#gs').value), name: $('#nm').value.trim(), phone: $('#ph').value.trim(), email: $('#em').value.trim(), paymentMethod: 'card', ...($('#early').checked ? { earlyCheckIn: '10:00' } : {}) });
-      $('#f').hidden = true;
-      $('#res').innerHTML = `<div class="hold" id="held">Бронь №${esc(b.number)} создана — даты держим до <b>${time(b.holdUntil)}</b> (30 минут). Оплатите, чтобы подтвердить.</div>
-        <button class="btn primary block" id="pay" style="margin-top:10px">💳 Оплатить ${kzt(b.totalKzt)} (тестовая оплата)</button>`;
-      $('#pay').onclick = () => pay(b);
-    } catch (err) { $('#res').innerHTML = `<div class="err">${esc(err.message)}</div>`; btn.disabled = false; }
-  };
-}
-async function pay(b) {
-  const btn = $('#pay'); if (btn.disabled) return; btn.disabled = true; btn.textContent = 'Оплачиваем…';
-  try {
-    await call(`/bookings/${encodeURIComponent(b.token)}/pay`, {});
-    const s = await call(`/bookings/${encodeURIComponent(b.token)}`);
-    $('#res').innerHTML = s.status === 'confirmed'
-      ? `<div class="ok" id="done">✅ <b>Бронь №${esc(s.number)} оплачена и подтверждена.</b><dl><dt>Адрес</dt><dd>${esc(s.apartment?.address || '')}</dd><dt>Заезд</dt><dd>${day(s.checkIn)}${s.checkInTime ? ', с ' + esc(s.checkInTime) : ''}</dd><dt>Выезд</dt><dd>${day(s.checkOut)}${s.checkOutTime ? ', до ' + esc(s.checkOutTime) : ''}</dd></dl>Подготовка квартиры уже запланирована. В настоящем сервисе пришло бы сообщение в Telegram.</div>
-         <button class="btn block" id="again" style="margin-top:10px">Забронировать ещё</button>`
-      : `<div class="err">Оплата принята, статус брони: ${esc(s.status)}</div>`;
-    $('#again')?.addEventListener('click', () => { $('#bookView').hidden = true; $('#searchView').hidden = false; search(); });
-  } catch (err) { $('#res').insertAdjacentHTML('beforeend', `<div class="err">${esc(err.message)}</div>`); btn.disabled = false; btn.textContent = 'Оплатить ещё раз'; }
-}
-document.addEventListener('click', (e) => { const b = e.target.closest('[data-book]'); if (b) showForm(apts.find(a => a.id === b.dataset.book)); });
-demo.ready.then(search).catch(e => { $('#status').textContent = 'Не удалось запустить демо: ' + e.message; });
-</script>
+<section class="blk" id="map">
+  <div class="wrap">
+    <div class="sec-h"><div><h2>Квартиры на карте</h2><p>Нажмите на район, чтобы показать квартиры в нём</p></div></div>
+    <div class="map-wrap"><div class="map" id="mapBox"></div><div class="dlist" id="dlist"></div></div>
+  </div>
+</section>
+
+<section class="blk" id="transfer">
+  <div class="wrap">
+    <div class="sec-h"><div><h2>Трансфер из аэропорта и вокзала</h2><p>Встретим с табличкой с вашим именем и довезём до квартиры — или отвезём на рейс</p></div></div>
+    <div id="trSec"></div>
+  </div>
+</section>
+
+<section class="blk" id="how">
+  <div class="wrap">
+    <div class="sec-h"><div><h2>Как забронировать</h2><p>Без регистрации и комиссий площадок</p></div></div>
+    <div class="steps">
+      <div class="stp"><div class="n">1</div><b>Выберите квартиру и даты</b><span>В календаре видно, какие даты свободны.</span></div>
+      <div class="stp"><div class="n">2</div><b>Оставьте контакты</b><span>Добавьте трансфер и питомца, оплатите картой, наличными при заселении или через мессенджер.</span></div>
+      <div class="stp"><div class="n">3</div><b>Получите инструкцию</b><span>Код от замка и схему проезда пришлём в день заезда.</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="blk">
+  <div class="wrap">
+    <div class="sec-h"><div><h2>Отзывы гостей</h2><p>Средняя оценка 4,86 из 5 · отзывы вымышленные (демо)</p></div></div>
+    <div class="revs" id="revs"></div>
+  </div>
+</section>
+
+<footer class="site" id="contacts">
+  <div class="wrap">
+    <div class="fgrid">
+      <div><div class="logo" style="margin-bottom:10px"><span class="logo-mk" id="logoMk2" data-brand="logo"></span><span><b data-brand="name">Astana Stay</b></span></div>Квартиры посуточно в Астане. Работаем 24/7.</div>
+      <div><b>Контакты (демо)</b><br><span data-brand="phone">+7 700 000 00 00</span><br>Telegram: <span data-brand="telegram">@astanastay_demo</span><br><span data-brand="email">hello@astanastay.example</span></div>
+      <div><b>Гостям</b><br><a href="#catalog">Квартиры посуточно</a><br><a href="#transfer">Трансфер из аэропорта</a><br><a href="#how">Как забронировать</a></div>
+    </div>
+    <div class="fdemo"><span>Демо-данные: бренд «<span data-brand="name">Astana Stay</span>», квартиры, цены, отзывы и контакты вымышленные.</span><span>Работает на Сутки·Pro (прототип) · <a class="team-link" href="team.html">Вход для команды</a></span></div>
+  </div>
+</footer>
+
+<div class="modal" id="modal" aria-modal="true" role="dialog"><div class="mbox" id="mbox"></div></div>
+
+<div class="ssheet" id="ssheet" role="dialog" aria-modal="true" aria-label="Поиск квартиры"><div class="ss-box">
+  <div class="ss-h"><b>Поиск квартиры</b><button type="button" class="mclose static" data-ssclose aria-label="Закрыть"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <form class="search-card sheet" id="sheetForm" novalidate></form>
+  <button type="button" class="btn brand block ss-go" data-ssclose onclick="document.getElementById('catalog').scrollIntoView({behavior:'smooth'})" id="sheetCount">Показать квартиры</button>
+</div></div>
+
+<div class="dp" id="dp" role="dialog" aria-modal="true" aria-labelledby="dpTitle"><div class="dp-box">
+  <div class="dp-h"><div><b id="dpTitle">Даты</b><small id="dpSub"></small></div><button type="button" class="mclose static" data-dpclose aria-label="Закрыть календарь"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+  <div class="dp-wd"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span class="we">Сб</span><span class="we">Вс</span></div>
+  <div class="dp-body" id="dpBody"><div class="dpc" data-pk="dp" data-view="overlay"></div></div>
+  <div class="dp-f"><div class="dp-sum" id="dpSum"></div><div class="dp-btns"><button type="button" class="btn" data-dpreset>Сбросить</button><button type="button" class="btn brand" id="dpDone">Готово</button></div></div>
+</div></div>
+
+<script src="assets/i18n.js"></script>
+<script src="assets/i18n-en.js"></script>
+<script src="assets/brand.js"></script>
+<script src="assets/data.js"></script>
+<script src="assets/store.js"></script>
+<script src="assets/guest.js"></script>
 </body>
 </html>

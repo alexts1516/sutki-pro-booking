@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru" data-demo-guest>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#4f46e5">
+<title>Astana Stay — квартиры посуточно (демо Сутки·Pro)</title>
+<link rel="icon" href="data:,">
+<!-- Сайт гостя статического демо (DEMO_SITE=guest): тот же публичный API сервера (/api/public/<аккаунт>/…), работающий в браузере.
+     Бронь — только с оплатой картой; неоплаченная заявка держит даты 30 мин; «оплата» — тестовая (без банка). -->
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;background:#f1f5f9;color:#0f172a;-webkit-text-size-adjust:100%}
+.wrap{max-width:960px;margin:0 auto;padding:16px 14px 60px}
+header{display:flex;gap:10px;align-items:center;margin:4px 0 14px}
+.logo{width:42px;height:42px;border-radius:12px;background:#4f46e5;color:#fff;font-weight:800;font-size:22px;display:flex;align-items:center;justify-content:center;flex:none}
+h1{font-size:21px;margin:0}header small{color:#64748b;font-size:13px}
+.grow{flex:1}.muted{color:#64748b;font-size:13.5px}
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:14px;margin:12px 0}
+.notice{background:#fefce8;border-color:#fde68a;font-size:14px;line-height:1.45}
+.search{display:grid;grid-template-columns:1fr 1fr 110px;gap:10px;align-items:end}
+.search>*{min-width:0}
+@media(max-width:560px){.search{grid-template-columns:1fr 1fr}.search .g{grid-column:1/-1}}
+label{display:block;font-size:13px;color:#475569;font-weight:600}
+input,select{width:100%;margin-top:4px;padding:11px;border:1px solid #cbd5e1;border-radius:11px;font:inherit;font-size:16px;background:#fff}
+input[type=checkbox]{width:auto;margin:0 8px 0 0}
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.apt{background:#fff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+.apt img{width:100%;height:160px;object-fit:cover;background:#e2e8f0;display:block}
+.apt .b{padding:12px;display:flex;flex-direction:column;gap:4px;flex:1}
+.apt b{font-size:15.5px}.price{font-weight:800;font-size:17px;margin-top:auto}
+.busy{opacity:.55}
+.btn{border:1px solid #cbd5e1;background:#fff;border-radius:11px;padding:11px 14px;font:inherit;font-weight:650;cursor:pointer;color:inherit;text-decoration:none;display:inline-block;text-align:center}
+.btn.primary{background:#4f46e5;border-color:#4f46e5;color:#fff}.btn:disabled{opacity:.55;cursor:default}.btn.block{width:100%}
+.ok{background:#dcfce7;color:#166534;border-radius:12px;padding:12px;margin-top:10px}
+.err{background:#fee2e2;color:#991b1b;border-radius:12px;padding:12px;margin-top:10px}
+.hold{background:#e0f2fe;color:#075985;border-radius:12px;padding:12px;margin-top:10px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:8px 0}dt{color:#64748b;font-size:13.5px}dd{margin:0;font-weight:600}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1}
+footer{margin-top:24px;font-size:13px;color:#64748b;text-align:center}footer a{color:#4f46e5}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><div class="logo">A</div><div class="grow"><h1>Astana Stay</h1><small>Квартиры посуточно в Астане · ЖК Хайвил</small></div></header>
+  <div class="card notice">Это <b>демо</b>: сайт работает целиком в вашем браузере, данные вымышленные, <b>оплата тестовая — деньги не списываются</b>.</div>
+  <div id="status" class="muted">Загружаем квартиры…</div>
+
+  <section id="searchView">
+    <div class="card search">
+      <label>Заезд<input type="date" id="ci"></label>
+      <label>Выезд<input type="date" id="co"></label>
+      <label class="g">Гостей<select id="gs"><option>1</option><option selected>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></label>
+    </div>
+    <div class="list" id="list"></div>
+  </section>
+
+  <section id="bookView" hidden></section>
+
+  <footer>Сутки·Pro — демо · <a href="team.html">Как это видит команда (владелец, админ, водитель…)</a></footer>
+</div>
+<script type="module">
+import { demo } from './demo/demo.js';
+const API = '/api/public/astana-stay';
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const kzt = (n) => Math.round(n || 0).toLocaleString('ru-RU') + ' ₸';
+const iso = (d) => new Date(Date.now() + d * 86400000 + 5 * 3600000).toISOString().slice(0, 10);
+const day = (s) => new Date(s + 'T00:00:00Z').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' });
+const time = (s) => new Date(s).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+async function call(path, body) {
+  const r = await fetch(API + path, body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error((d.error || `Ошибка ${r.status}`) + (d.details ? ': ' + d.details.map(x => x.message).join(', ') : ''));
+  return d;
+}
+let apts = [];
+$('#ci').value = iso(4); $('#co').value = iso(6);
+$('#ci').min = $('#co').min = iso(0);
+
+async function search() {
+  const ci = $('#ci').value, co = $('#co').value, gs = $('#gs').value;
+  if (!ci || !co || co <= ci) { $('#status').textContent = 'Выберите даты: выезд позже заезда'; $('#list').innerHTML = ''; return; }
+  apts = await call(`/apartments?checkIn=${ci}&checkOut=${co}&guests=${gs}`);
+  apts.sort((a, b) => (b.available !== false) - (a.available !== false));
+  const free = apts.filter(a => a.available !== false).length;
+  $('#status').textContent = `${day(ci)} — ${day(co)}: свободно ${free} из ${apts.length}`;
+  $('#list').innerHTML = apts.map(a => `<div class="apt ${a.available === false ? 'busy' : ''}">
+    ${a.cover ? `<img src="${esc(a.cover.url)}" alt="" loading="lazy">` : '<img alt="">'}
+    <div class="b"><b>${esc(a.title)}</b><span class="muted">${esc(a.rooms)} · до ${a.maxGuests} гостей${a.areaM2 ? ` · ${a.areaM2} м²` : ''}</span>
+    <span class="muted">${esc(a.address)}</span>
+    <div class="price">${a.quote ? `${kzt(a.quote.totalKzt)} <span class="muted">за ${a.quote.nights} ноч.</span>` : `${kzt(a.basePriceKzt)} <span class="muted">/ ночь</span>`}</div>
+    ${a.available === false ? '<button class="btn block" disabled>Занято на эти даты</button>' : `<button class="btn primary block" data-book="${esc(a.id)}">Забронировать</button>`}</div></div>`).join('');
+}
+['ci', 'co', 'gs'].forEach(id => $('#' + id).addEventListener('change', () => search().catch(e => { $('#status').textContent = e.message; })));
+
+function showForm(a) {
+  const ci = $('#ci').value, co = $('#co').value;
+  $('#searchView').hidden = true; const v = $('#bookView'); v.hidden = false; window.scrollTo(0, 0);
+  v.innerHTML = `<div class="card"><button class="btn" id="back">← К списку</button>
+    <h2 style="margin:12px 0 4px">${esc(a.title)}</h2><div class="muted">${esc(a.rooms)} · ${esc(a.address)}</div>
+    <dl><dt>Заезд</dt><dd>${day(ci)}</dd><dt>Выезд</dt><dd>${day(co)}</dd><dt>Гостей</dt><dd>${$('#gs').value}</dd><dt>Сумма</dt><dd>${kzt(a.quote?.totalKzt)}</dd><dt>Оплата</dt><dd>картой онлайн (на сайте — только с оплатой)</dd></dl>
+    <form id="f" novalidate>
+      <div class="row"><label>Имя<input id="nm" autocomplete="name" placeholder="Анна Смирнова"></label><label>Телефон<input id="ph" type="tel" autocomplete="tel" placeholder="+7 701 555 12 34"></label></div>
+      <label style="margin-top:10px">Почта (необязательно)<input id="em" type="email" autocomplete="email"></label>
+      <label style="margin-top:10px;display:flex;align-items:center"><input type="checkbox" id="early"> Хочу заехать пораньше — в 10:00 (согласует администратор)</label>
+      <button class="btn primary block" id="go" style="margin-top:12px">Забронировать и перейти к оплате</button>
+    </form><div id="res"></div>
+    <p class="muted">Нужны особые условия (наличные, залог)? Напишите нам — владелец пришлёт личную ссылку.</p></div>`;
+  $('#back').onclick = () => { v.hidden = true; $('#searchView').hidden = false; search(); };
+  $('#f').onsubmit = async (e) => {
+    e.preventDefault(); const btn = $('#go'); if (btn.disabled) return; btn.disabled = true; $('#res').innerHTML = '';
+    try {
+      const b = await call('/bookings', { apartmentId: a.id, checkIn: ci, checkOut: co, guests: Number($('#gs').value), name: $('#nm').value.trim(), phone: $('#ph').value.trim(), email: $('#em').value.trim(), paymentMethod: 'card', ...($('#early').checked ? { earlyCheckIn: '10:00' } : {}) });
+      $('#f').hidden = true;
+      $('#res').innerHTML = `<div class="hold" id="held">Бронь №${esc(b.number)} создана — даты держим до <b>${time(b.holdUntil)}</b> (30 минут). Оплатите, чтобы подтвердить.</div>
+        <button class="btn primary block" id="pay" style="margin-top:10px">💳 Оплатить ${kzt(b.totalKzt)} (тестовая оплата)</button>`;
+      $('#pay').onclick = () => pay(b);
+    } catch (err) { $('#res').innerHTML = `<div class="err">${esc(err.message)}</div>`; btn.disabled = false; }
+  };
+}
+async function pay(b) {
+  const btn = $('#pay'); if (btn.disabled) return; btn.disabled = true; btn.textContent = 'Оплачиваем…';
+  try {
+    await call(`/bookings/${encodeURIComponent(b.token)}/pay`, {});
+    const s = await call(`/bookings/${encodeURIComponent(b.token)}`);
+    $('#res').innerHTML = s.status === 'confirmed'
+      ? `<div class="ok" id="done">✅ <b>Бронь №${esc(s.number)} оплачена и подтверждена.</b><dl><dt>Адрес</dt><dd>${esc(s.apartment?.address || '')}</dd><dt>Заезд</dt><dd>${day(s.checkIn)}${s.checkInTime ? ', с ' + esc(s.checkInTime) : ''}</dd><dt>Выезд</dt><dd>${day(s.checkOut)}${s.checkOutTime ? ', до ' + esc(s.checkOutTime) : ''}</dd></dl>Подготовка квартиры уже запланирована. В настоящем сервисе пришло бы сообщение в Telegram.</div>
+         <button class="btn block" id="again" style="margin-top:10px">Забронировать ещё</button>`
+      : `<div class="err">Оплата принята, статус брони: ${esc(s.status)}</div>`;
+    $('#again')?.addEventListener('click', () => { $('#bookView').hidden = true; $('#searchView').hidden = false; search(); });
+  } catch (err) { $('#res').insertAdjacentHTML('beforeend', `<div class="err">${esc(err.message)}</div>`); btn.disabled = false; btn.textContent = 'Оплатить ещё раз'; }
+}
+document.addEventListener('click', (e) => { const b = e.target.closest('[data-book]'); if (b) showForm(apts.find(a => a.id === b.dataset.book)); });
+demo.ready.then(search).catch(e => { $('#status').textContent = 'Не удалось запустить демо: ' + e.message; });
+</script>
+</body>
+</html>

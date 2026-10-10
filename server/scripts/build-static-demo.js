@@ -137,7 +137,10 @@ fs.copyFileSync(path.join(repo, 'assets', 'brand', 'pin-silver-128.png'), path.j
 // 5) главная страница демо
 if (process.env.DEMO_SITE === 'guest') {
   // сайт гостя в корне (DEMO_SITE=guest): index.html — бронь гостя, team.html — главная демо команды (роли, сценарии)
-  fs.copyFileSync(rel('demo', 'guest', 'index.html'), path.join(out, 'index.html'));
+  // корень — исходный сайт гостя прототипа (коммит b9de0ba, 1 окт 2026, до ребрендинга): demo/guest-original (своя бронь в localStorage)
+  fs.copyFileSync(rel('demo', 'guest-original', 'index.html'), path.join(out, 'index.html'));
+  fs.cpSync(rel('demo', 'guest-original', 'assets'), path.join(out, 'assets'), { recursive: true });
+  fs.copyFileSync(rel('demo', 'guest', 'index.html'), path.join(out, 'booking.html'));   // сайт гостя на API прохода 4 (только карта, удержание 30 мин)
   const land = fs.readFileSync(rel('demo', 'landing', 'index.html'), 'utf8');
   if (!land.includes('<a class="btn" href="../">Старый прототип</a>')) throw new Error('landing: не нашёл ссылку «Старый прототип»');
   fs.writeFileSync(path.join(out, 'team.html'), land.replace('<a class="btn" href="../">Старый прототип</a>', '<a class="btn" href="./">Сайт гостя</a>'));

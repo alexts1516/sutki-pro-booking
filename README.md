@@ -1,5 +1,5 @@
 > **Этот репозиторий — версия «Сутки·Pro» с проходом 4 (шаги 1–7: оплата только картой на сайте, удержание дат, личная ссылка для особой брони).**
-> Сайт гостя (демо, работает в браузере): https://alexts1516.github.io/sutki-pro-booking/ · команда: https://alexts1516.github.io/sutki-pro-booking/team.html
+> Сайт гостя (исходный дизайн прототипа, 1 окт 2026): https://alexts1516.github.io/sutki-pro-booking/ · бронь на API прохода 4: booking.html · команда: team.html
 > Сборка сайта: `cd server && npm run demo:build:site` → папка `site/` (публикуется GitHub Actions, `.github/workflows/pages.yml`).
 
 # Сутки·Pro — демо-прототип
