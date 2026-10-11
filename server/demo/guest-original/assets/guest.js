@@ -439,9 +439,13 @@ renderTransferSection();
 /* ---------- модальное окно: квартира → бронь → оплата; отдельный заказ трансфера ---------- */
 const M = {flow:'booking', apt:null, step:'details', ci:null, co:null, guests:2, pet:false, pay:'card', form:{name:'',phone:'+7 ',comment:''}, photo:0, saved:null, ref:{src:'site',num:'',addr:''}, trPay:'driver'};
 const SUBMIT_LBL = {card:tx('Перейти к оплате')};
-/* «Задать вопрос» — не способ оплаты: Telegram администратора, если его нет — WhatsApp (BRAND.contacts) */
-const askUrl = () => BRAND.contacts.telegram ? 'https://t.me/' + BRAND.contacts.telegram : BRAND.contacts.whatsapp ? 'https://wa.me/' + BRAND.contacts.whatsapp : '';
-const askLink = () => askUrl() ? `<a class="ask-link" id="askLink" href="${askUrl()}" target="_blank" rel="noopener" style="display:block;text-align:center;font-size:13.5px;margin-top:10px;font-weight:600">${tx('Задать вопрос')}</a>` : '';
+/* помощь с оплатой: Telegram / WhatsApp администратора из BRAND.contacts (не способ оплаты); текст с квартирой и датами */
+const DECLINE_CARD = '4000000000000002';   // демо: банк отклоняет первую попытку оплаты этой картой
+function helpMsg(){ const a=M.apt; return `${tx("Здравствуйте! Бронирую «")}${a?a.title:''}»${M.ci!=null&&M.co!=null?` ${tx("с")} ${fDL(M.ci)} ${tx("по")} ${fDL(M.co)}`:''}. ${tx("Не получается оплатить / есть вопрос.")}`; }
+function helpHTML(lbl){ const c=BRAND.contacts||{}, q=encodeURIComponent(helpMsg());
+  const tg = c.telegram ? `<a class="btn sm" id="helpTg" href="https://t.me/${encodeURIComponent(c.telegram)}?text=${q}" target="_blank" rel="noopener">${ic('send',15)} Telegram</a>` : '';
+  const wa = c.whatsapp ? `<a class="btn sm" id="helpWa" href="https://wa.me/${String(c.whatsapp).replace(/\D/g,'')}?text=${q}" target="_blank" rel="noopener">${ic('msg',15)} WhatsApp</a>` : '';
+  return tg||wa ? `<div class="pay-help" style="text-align:center;margin-top:12px"><div class="muted" style="font-size:13px;margin-bottom:8px">${lbl}</div><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">${tg}${wa}</div></div>` : ''; }
 function showModal(){ $('modal').classList.add('open'); document.body.classList.add('dp-lock'); $('modal').scrollTop=0; }
 function openApt(id){
   const a=gById(id); if(!a) return;
@@ -505,7 +509,7 @@ function renderModal(){
       <div id="selInfo" class="selinfo">${selText()}</div>
       <div id="sumBox">${sumHTML()}</div>
       <button type="button" class="btn brand block" style="margin-top:12px;height:50px" data-to-form id="toFormBtn">${t.n?tx('Забронировать'):tx('Выбрать даты')}</button>
-      <div class="muted" style="font-size:12.5px;text-align:center;margin-top:8px">${tx("Оплата картой, наличными или через мессенджер")}</div></aside></div>
+      <div class="muted" style="font-size:12.5px;text-align:center;margin-top:8px">${tx("Оплата картой онлайн")}</div></aside></div>
     <div class="avail" id="availBox"><div class="avail-h"><div><h3>${tx("Свободные даты")}</h3><p class="muted">${tx("Зачёркнутые дни заняты. Нажмите на день заезда, затем на день выезда — ночи и сумма посчитаются сразу.")}</p></div></div>
       <div class="dpc inline" data-pk="apt" data-view="inline"></div></div>
     <div class="mbar"><div><b>${gmN(a)}</b> <span class="muted">${tx("/ ночь")}</span><div class="muted" style="font-size:12px" id="mbarInfo">${t.n?`${nightsWord(t.n)} · ${fc(t.cTotal)}`:tx('выберите даты')}</div></div><button type="button" class="btn brand" data-to-form>${t.n?tx('Забронировать'):tx('Выбрать даты')}</button></div>`;
@@ -532,7 +536,7 @@ function renderModal(){
         <div style="font-size:14px;display:flex;justify-content:space-between"><span class="muted">${tx("Даты")}</span><b id="fDates">${t.n?`${fD(M.ci)} – ${fD(M.co)}`:'—'}</b></div>
         <div id="fSum">${sumHTML()}</div>
         <button class="btn brand block" type="submit" style="margin-top:14px;height:52px" id="bSubmit">${SUBMIT_LBL.card}</button>
-        ${askLink()}
+        ${helpHTML(tx('Не получается оплатить или есть вопрос?'))}
         <div class="muted" style="font-size:12px;text-align:center;margin-top:8px">${ic('shield',13)} ${tx("Демо: данные сохраняются только в этом браузере")}</div></div></aside></form></div>
       <div class="mbar"><div><b id="mbTot">${t.n?fc(t.cTotal):'—'}</b><div class="muted" style="font-size:12px">${tx("итого")}${t.n?tx(' за ')+nightsWord(t.n):''}</div></div><button type="submit" form="bookForm" class="btn brand" id="mbSubmit">${SUBMIT_LBL.card}</button></div>`;
   }
@@ -559,14 +563,17 @@ function trRecap(tr){ const P=TR_PLACES[tr.place]; return trLegs(tr).map(l=>`${l
 function cardStepHTML(total, asideHTML, back, stepLbl){
   return `<div class="pane"><div class="step-h"><button type="button" class="backb" data-back="${back}" aria-label="${tx("Назад")}">${ic('chevL',18)}</button><div><h2 style="font-size:22px">${tx("Оплата картой")}</h2><div class="muted" style="font-size:13px">${stepLbl}</div></div></div>
     <div class="form-grid"><div>
-    <div class="demo-note">${ic('alert',16)}<span><b>${tx("Демо-оплата.")}</b> ${tx("Реального списания нет, данные карты никуда не отправляются и не сохраняются. Номер уже заполнен тестовым.")}</span></div>
+    <div class="demo-note">${ic('alert',16)}<span><b>${tx("Демо-оплата.")}</b> ${tx("Реального списания нет, данные карты никуда не отправляются и не сохраняются. Номер уже заполнен тестовым.")}${back==='form'?` ${tx("Чтобы проверить отказ банка, введите 4000 0000 0000 0002.")}`:''}</span></div>
     <div class="cardviz"><div style="display:flex;justify-content:space-between;align-items:center;position:relative;z-index:1"><span class="chip-ic"></span><b style="letter-spacing:.08em">DEMO</b></div><div class="num" id="cvNum">4242 4242 4242 4242</div><div style="display:flex;justify-content:space-between;font-size:13px;position:relative;z-index:1"><span>${esc((M.form.name||'GUEST').toUpperCase())}</span><span>12/28</span></div></div>
     <form id="cardForm" novalidate>
       <div class="field"><label for="cNum">${tx("Номер карты")}</label><input class="inp" id="cNum" inputmode="numeric" value="4242 4242 4242 4242" maxlength="19" autocomplete="off"></div>
       <div class="two"><div class="field"><label for="cExp">${tx("Срок")}</label><input class="inp" id="cExp" value="12/28" maxlength="5" autocomplete="off"></div><div class="field"><label for="cCvc">CVC</label><input class="inp" id="cCvc" value="123" maxlength="3" inputmode="numeric" type="password" autocomplete="off"></div></div>
       <div class="err" id="cErr"></div>
       <button class="btn brand block" type="submit" style="height:52px" id="payBtn">${tx("Оплатить")} ${typeof total==='string'?total:gm(total)} ${tx("(демо)")}</button>
-    </form></div>
+    </form>${back==='form'?`<div id="cDecl" hidden><div class="decl" style="border:1px solid #f3c7c7;background:#fff5f5;border-radius:14px;padding:16px 16px 14px"><b style="color:var(--bad);font-size:17px;display:flex;gap:8px;align-items:center">${ic('alert',18)} ${tx("Банк отклонил оплату")}</b>
+      <div class="muted" style="font-size:13.5px;margin-top:6px">${tx("Деньги не списаны, бронь не создана. Частые причины: недостаточно средств, банк заблокировал платёж (разрешите его в приложении банка) или не введён код из SMS.")}</div>
+      <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap"><button type="button" class="btn brand" data-cdecl="retry">${tx("Попробовать снова")}</button><button type="button" class="btn" data-cdecl="other">${tx("Другая карта")}</button></div></div>
+      ${helpHTML(tx('Не получилось? Напишите нам'))}</div>`:''}</div>
     <aside><div class="bookbox">${asideHTML}</div></aside></div></div>`;
 }
 function chatText(){ const a=M.apt, t=totals(); const T=TR.bk;
@@ -717,6 +724,9 @@ document.addEventListener('click', e=>{
   if(t.closest('[data-petchip]')){ setSearch('pets', !G.pets); return; }
   if(t.closest('[data-petperk]')){ e.preventDefault(); setSearch('pets', true); $('catalog').scrollIntoView({behavior:'smooth'}); toast(tx('Показываем квартиры, где можно с животными')); return; }
   if(t.closest('[data-reset]')){ Object.assign(G,{ci:null,co:null,guests:1,district:'',maxPrice:0,rooms:'',pets:false}); syncSearch(); renderGrid(); return; }
+  const cd=t.closest('[data-cdecl]'); if(cd){ $('cDecl').hidden=true; $('cardForm').hidden=false; $('cErr').classList.remove('show');
+    if(cd.dataset.cdecl==='retry'){ M.declRetry=true; $('cardForm').requestSubmit(); }
+    else { M.declRetry=false; ['cNum','cExp','cCvc'].forEach(k=>$(k).value=''); $('cvNum').textContent='•••• •••• •••• ••••'; $('cNum').focus(); } return; }
   const gt=t.closest('[data-gthumb]'); if(gt){ setSlide(+gt.dataset.gthumb); return; }
   const ph=t.closest('[data-photo]'); if(ph){ openViewer(M.apt, +ph.dataset.photo); return; }
   /* бронь */
@@ -754,13 +764,14 @@ document.addEventListener('submit', e=>{
   const id=e.target.id;
   if(id==='searchForm'||id==='sheetForm'){ e.preventDefault(); closeSheet(); $('catalog').scrollIntoView({behavior:'smooth'}); return; }
   if(id==='bookForm'){ e.preventDefault(); readForm(); if(!validateForm()) return;
-    M.pay='card'; M.step='card'; renderModal(); $('modal').scrollTop=0; return; }
+    M.pay='card'; M.declRetry=false; M.step='card'; renderModal(); $('modal').scrollTop=0; return; }
   if(id==='trForm'){ e.preventDefault(); readTrForm(); if(!validateTr()) return;
     if(M.trPay==='card'){ M.step='trcard'; renderModal(); $('modal').scrollTop=0; } else saveTransfer(); return; }
   if(id==='cardForm'){ e.preventDefault(); const n=$('cNum').value.replace(/\D/g,''); const err=$('cErr');
     if(n.length<16){ err.textContent=tx('Введите 16 цифр номера карты (в демо подойдёт любой)'); err.classList.add('show'); return; }
     if(!/^\d\d\/\d\d$/.test($('cExp').value)){ err.textContent=tx('Срок в формате ММ/ГГ'); err.classList.add('show'); return; }
-    const b=$('payBtn'); b.disabled=true; b.innerHTML=tx('<span class="spinner"></span> Обработка платежа (демо)…');
+    const b=$('payBtn'); b.dataset.lbl=b.dataset.lbl||b.innerHTML; b.disabled=true; b.innerHTML=tx('<span class="spinner"></span> Обработка платежа (демо)…');
+    if(M.flow!=='tr' && n===DECLINE_CARD && !M.declRetry){ setTimeout(()=>{ b.disabled=false; b.innerHTML=b.dataset.lbl; $('cardForm').hidden=true; $('cDecl').hidden=false; }, 1100); return; }   // отказ: бронь не создаётся
     setTimeout(M.flow==='tr'?saveTransfer:saveRequest, 1100); }
 });
 let rsz, wasMob=isMob();
