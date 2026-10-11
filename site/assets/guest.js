@@ -433,7 +433,10 @@ renderTransferSection();
 
 /* ---------- модальное окно: квартира → бронь → оплата; отдельный заказ трансфера ---------- */
 const M = {flow:'booking', apt:null, step:'details', ci:null, co:null, guests:2, pet:false, pay:'card', form:{name:'',phone:'+7 ',comment:''}, photo:0, saved:null, ref:{src:'site',num:'',addr:''}, trPay:'driver'};
-const SUBMIT_LBL = {card:tx('Перейти к оплате'),cash:tx('Забронировать'),telegram:tx('Продолжить в Telegram'),whatsapp:tx('Продолжить в WhatsApp')};
+const SUBMIT_LBL = {card:tx('Перейти к оплате')};
+/* «Задать вопрос» — не способ оплаты: Telegram администратора, если его нет — WhatsApp (BRAND.contacts) */
+const askUrl = () => BRAND.contacts.telegram ? 'https://t.me/' + BRAND.contacts.telegram : BRAND.contacts.whatsapp ? 'https://wa.me/' + BRAND.contacts.whatsapp : '';
+const askLink = () => askUrl() ? `<a class="ask-link" id="askLink" href="${askUrl()}" target="_blank" rel="noopener" style="display:block;text-align:center;font-size:13.5px;margin-top:10px;font-weight:600">${tx('Задать вопрос')}</a>` : '';
 function showModal(){ $('modal').classList.add('open'); document.body.classList.add('dp-lock'); $('modal').scrollTop=0; }
 function openApt(id){
   const a=gById(id); if(!a) return;
@@ -500,8 +503,8 @@ function renderModal(){
     renderPK('apt');
   }
   else if(M.step==='form'){
-    const payIc = {card:['card','#2c3038'],cash:['cash','#15803d'],telegram:['send','#229ED9'],whatsapp:['msg','#22B35E']};
-    const paySub = {card:tx('Visa, Mastercard · мгновенное подтверждение'),cash:tx('Оплата в ₸ при заселении'),telegram:tx('Обсудить и оплатить в чате'),whatsapp:tx('Обсудить и оплатить в чате')};
+    const payIc = {card:['card','#2c3038']};
+    const paySub = {card:tx('Visa, Mastercard · мгновенное подтверждение')};
     const p=a.pets;
     box.innerHTML = close + `<div class="pane has-bar"><div class="step-h"><button type="button" class="backb" data-back="details" aria-label="${tx("Назад")}">${ic('chevL',18)}</button><div><h2 style="font-size:22px">${tx("Оформление брони")}</h2><div class="muted" style="font-size:13px">${tx("Шаг 2 из 3 · без регистрации")}</div></div></div>
       <form id="bookForm" class="form-grid" novalidate><div>
@@ -513,28 +516,19 @@ function renderModal(){
         <div class="trwrap ${TR.bk.on?'on':''}" id="trWrap">${trWrapInner()}</div>
         <div class="field"><label for="bCom">${tx("Комментарий")} <span class="muted" style="font-weight:500">${tx("(необязательно)")}</span></label><textarea class="inp" id="bCom" placeholder="${tx("Поздний заезд, детская кроватка…")}">${esc(M.form.comment)}</textarea></div>
         <div class="field" style="margin-bottom:6px"><label>${tx("Способ оплаты")}</label></div>
-        <div class="pays">${Object.keys(PAY_METHODS).map(k=>`<button type="button" class="pay ${M.pay===k?'on':''}" data-pay="${k}"><span class="pi" style="background:${payIc[k][1]}">${ic(payIc[k][0],18)}</span><span><b>${PAY_METHODS[k].label}</b><small>${paySub[k]}</small></span></button>`).join('')}</div>
+        <div class="pays"><div class="pay on"><span class="pi" style="background:${payIc.card[1]}">${ic(payIc.card[0],18)}</span><span><b>${PAY_METHODS.card.label}</b><small>${paySub.card}</small></span></div></div>
         <div class="err" id="bErr"></div>
       </div>
       <aside><div class="bookbox">${miniApt(a,'f0',`${tx(a.district)} · ${ic('star',12)} ${aptRating(a)}${p.allowed?` · ${ic('paw',12)} ${tx("с животными")}`:''}`)}
         <div style="font-size:14px;display:flex;justify-content:space-between"><span class="muted">${tx("Даты")}</span><b id="fDates">${t.n?`${fD(M.ci)} – ${fD(M.co)}`:'—'}</b></div>
         <div id="fSum">${sumHTML()}</div>
-        <button class="btn brand block" type="submit" style="margin-top:14px;height:52px" id="bSubmit">${SUBMIT_LBL[M.pay]}</button>
+        <button class="btn brand block" type="submit" style="margin-top:14px;height:52px" id="bSubmit">${SUBMIT_LBL.card}</button>
+        ${askLink()}
         <div class="muted" style="font-size:12px;text-align:center;margin-top:8px">${ic('shield',13)} ${tx("Демо: данные сохраняются только в этом браузере")}</div></div></aside></form></div>
-      <div class="mbar"><div><b id="mbTot">${t.n?fc(t.cTotal):'—'}</b><div class="muted" style="font-size:12px">${tx("итого")}${t.n?tx(' за ')+nightsWord(t.n):''}</div></div><button type="submit" form="bookForm" class="btn brand" id="mbSubmit">${SUBMIT_LBL[M.pay]}</button></div>`;
+      <div class="mbar"><div><b id="mbTot">${t.n?fc(t.cTotal):'—'}</b><div class="muted" style="font-size:12px">${tx("итого")}${t.n?tx(' за ')+nightsWord(t.n):''}</div></div><button type="submit" form="bookForm" class="btn brand" id="mbSubmit">${SUBMIT_LBL.card}</button></div>`;
   }
   else if(M.step==='card'){ box.innerHTML = close + cardStepHTML(fc(t.cTotal), miniApt(a,'c0',`${fD(M.ci)} – ${fD(M.co)} · ${guestsWord(M.guests)}`)+sumHTML(), 'form', tx('Шаг 3 из 3')); }
-  else if(M.step==='chat'){
-    const tg = M.pay==='telegram'; const col = tg?'#229ED9':'#128C7E';
-    box.innerHTML = close + `<div class="pane"><div class="step-h"><button type="button" class="backb" data-back="form" aria-label="${tx("Назад")}">${ic('chevL',18)}</button><div><h2 style="font-size:22px">${tg?tx('Написать в Telegram'):tx('Написать в WhatsApp')}</h2><div class="muted" style="font-size:13px">${tx("Предпросмотр сообщения")}</div></div></div>
-      <div class="form-grid"><div>
-      <div class="chat"><div class="chat-h" style="background:${col}"><span class="av">${esc(BRAND.short)}</span><div><b>${esc(BRAND.name)}</b><div style="font-size:12px;opacity:.85">${tg?'@'+BRAND.contacts.telegram:BRAND.contacts.phone} ${tx("· отвечает за 5 минут")}</div></div></div>
-        <div class="chat-b ${tg?'tg':''}"><div class="bub" id="chatMsg">${esc(chatText())}<small>${tx("сейчас ✓")}</small></div></div></div>
-      </div><div>
-      <div class="demo-note">${ic('alert',16)}<span><b>${tx("Демо.")}</b> ${tx("В рабочей версии откроется")} ${tg?'t.me/'+BRAND.contacts.telegram:'wa.me/'+BRAND.contacts.whatsapp} ${tx("с этим текстом. Сейчас реальные ссылки не открываются — заявка просто сохранится для владельца.")}</span></div>
-      <div class="bookbox">${sumHTML()}<button type="button" class="btn block" id="chatSend" style="margin-top:14px;height:52px;background:${col};border-color:${col};color:#fff">${ic(tg?'send':'msg',18)} ${tx("Отправить (демо)")}</button></div>
-      </div></div></div>`;
-  }
+
   else if(M.step==='success'){
     const r=M.saved; const pm=PAY_METHODS[r.payment];
     const status = r.payment==='card' ? `<span style="color:var(--ok)">${tx("Оплачено")} ${grt(r)} ${tx("(демо)")}</span>` : r.payment==='cash' ? tx('Оплата наличными при заселении') : `${tx("Ответим в")} ${r.payment==='telegram'?'Telegram':'WhatsApp'} ${tx("за 5 минут")}`;
@@ -576,8 +570,8 @@ function refreshDetailsBits(){ const t=totals();
 function refreshFormBits(){ const t=totals();
   $('fSum').innerHTML = sumHTML(); $('fDates').textContent = t.n?`${fD(M.ci)} – ${fD(M.co)}`:'—';
   $('formDates').innerHTML = dateFieldsHTML('data-dp-apt');
-  $('bSubmit').textContent = SUBMIT_LBL[M.pay];
-  if($('mbSubmit')){ $('mbSubmit').textContent = SUBMIT_LBL[M.pay]; $('mbTot').textContent = t.n?fc(t.cTotal):'—'; }
+  $('bSubmit').textContent = SUBMIT_LBL.card;
+  if($('mbSubmit')){ $('mbSubmit').textContent = SUBMIT_LBL.card; $('mbTot').textContent = t.n?fc(t.cTotal):'—'; }
   const tg=document.querySelector('.trtoggle small'); if(tg && TR.bk.on) tg.textContent = `${trSummary(TR.bk)} · ${gm(trPrice(TR.bk).total)}`;
   document.querySelectorAll('.pay[data-pay]').forEach(p=>p.classList.toggle('on', p.dataset.pay===M.pay)); }
 function readForm(){ if(!$('bName')) return; M.form.name=$('bName').value.trim(); M.form.phone=$('bPhone').value.trim(); M.form.comment=$('bCom').value.trim();
@@ -718,8 +712,6 @@ document.addEventListener('click', e=>{
   /* бронь */
   if(t.closest('[data-to-form]')){ if(!totals().n){ openDP('apt','ci', M.apt.title, tx('Зачёркнутые дни заняты · ')+gmN(M.apt)+tx(' за ночь')); return; } M.step='form'; renderModal(); $('modal').scrollTop=0; return; }
   const back=t.closest('[data-back]'); if(back){ if(M.step==='form') readForm(); if(M.step==='trcard') {} M.step=back.dataset.back; renderModal(); return; }
-  const pay=t.closest('[data-pay]'); if(pay){ M.pay=pay.dataset.pay; refreshFormBits(); return; }
-  if(t.closest('#chatSend')){ saveRequest(); return; }
   /* трансфер */
   if(t.closest('[data-trtoggle]')){ readForm(); const T=TR.bk; T.on=!T.on; if(T.on){ if(T.autoDates!==false){ T.arrDate=M.ci; T.depDate=M.co; } T.pax=Math.max(T.pax, M.guests); if(!T.sign) T.sign=M.form.name; }
     const w=$('trWrap'); w.classList.toggle('on',T.on); w.innerHTML=trWrapInner(); refreshFormBits(); if(T.on) w.scrollIntoView({block:'nearest',behavior:'smooth'}); return; }
@@ -752,9 +744,7 @@ document.addEventListener('submit', e=>{
   const id=e.target.id;
   if(id==='searchForm'||id==='sheetForm'){ e.preventDefault(); closeSheet(); $('catalog').scrollIntoView({behavior:'smooth'}); return; }
   if(id==='bookForm'){ e.preventDefault(); readForm(); if(!validateForm()) return;
-    if(M.pay==='card'){ M.step='card'; renderModal(); $('modal').scrollTop=0; }
-    else if(M.pay==='cash'){ saveRequest(); }
-    else { M.step='chat'; renderModal(); $('modal').scrollTop=0; } return; }
+    M.pay='card'; M.step='card'; renderModal(); $('modal').scrollTop=0; return; }
   if(id==='trForm'){ e.preventDefault(); readTrForm(); if(!validateTr()) return;
     if(M.trPay==='card'){ M.step='trcard'; renderModal(); $('modal').scrollTop=0; } else saveTransfer(); return; }
   if(id==='cardForm'){ e.preventDefault(); const n=$('cNum').value.replace(/\D/g,''); const err=$('cErr');

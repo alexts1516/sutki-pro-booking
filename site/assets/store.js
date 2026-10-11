@@ -90,10 +90,7 @@ const Auth = {
 
 /* ---------- способы оплаты с сайта ---------- */
 const PAY_METHODS = {
-  card:     {label:tx('Картой онлайн'),          short:'картой онлайн — оплачено (демо)', color:'green'},
-  cash:     {label:tx('Наличными при заселении'), short:'наличными при заселении',         color:'amber'},
-  telegram: {label:tx('Написать в Telegram'),     short:'договориться в Telegram',         color:'blue'},
-  whatsapp: {label:tx('Написать в WhatsApp'),     short:'договориться в WhatsApp',         color:'green'}
+  card:     {label:tx('Картой онлайн'),          short:'картой онлайн — оплачено (демо)', color:'green'}
 };
 
 /* ---------- применение сохранённых изменений к сгенерированным данным ---------- */
