@@ -620,3 +620,28 @@ body.pv-open{overflow:hidden}
 .pe-act .btn.sm{height:32px;padding:0 10px;font-size:13px}
 .pe-act .pe-del{color:var(--bad);margin-left:auto}
 .pe-act .btn[disabled]{opacity:.45;cursor:not-allowed}
+
+/* удобства: кнопка «Показать все», шторка, редактор удобств и правил */
+.amen-all{margin:-4px 0 6px}
+#amenAll{position:fixed;inset:0;z-index:260;background:rgba(16,33,43,.45);display:flex;align-items:center;justify-content:center;padding:16px}
+#amenAll[hidden]{display:none}
+#amenAll .aa-card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);width:100%;max-width:620px;max-height:86vh;display:flex;flex-direction:column;overflow:hidden}
+#amenAll .aa-h{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}
+#amenAll .aa-h h3{margin:0;font-size:19px}
+#amenAll .aa-h .mclose{position:static}
+#amenAll .aa-b{overflow:auto;padding:4px 18px 18px}
+#amenAll h4{margin:16px 0 4px;font-size:14px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+#amenAll .amen{margin:8px 0}
+@media (max-width:768px){#amenAll{align-items:flex-end;padding:0}#amenAll .aa-card{max-width:none;max-height:88vh;border-radius:18px 18px 0 0}}
+.pe-sec{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.pe-sec h3{margin:0 0 6px;font-size:18px}
+.pe-amen{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.pe-ag{border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:6px}
+.pe-ag>b{font-size:13.5px;margin-bottom:2px}
+.pe-chk{display:flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;color:var(--ink2)}
+.pe-chk .ic{color:var(--brand2);flex:none}
+.pe-wifi{height:36px;font-size:13px;margin:0 0 4px 24px;width:calc(100% - 24px)}
+.pe-custom{margin-top:14px}
+.pe-rules{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.pe-rules label{display:flex;flex-direction:column;gap:5px;font-size:13px;font-weight:600;color:var(--ink2)}
+.pe-rules .inp[disabled]{opacity:.5}

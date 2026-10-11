@@ -48,6 +48,54 @@ const guestApts = apartments.map(a=>Object.assign({}, a, {
   pets: aptPets(a)
 }));
 const gById = id => guestApts.find(a=>a.id===id);
+
+/* ---------- удобства и правила проживания (редактирует владелец/админ в index.html#photos) ----------
+   st.aptInfo[aptId] = {amen:[id…], wifiSpeed, rules:{ci,co,early,pets,parties,smoking,quiet,quietFrom,quietTo,deposit}}, st.amenCustom = [{id,name,group}].
+   Нет записи — значения по умолчанию = прежний вид карточки. */
+const L2 = (ru, en) => IS_EN ? en : ru;
+const AMEN_GROUPS = [['tech','Интернет и техника','Internet & tech'],['kitchen','Кухня','Kitchen'],['bath','Ванная','Bathroom'],['bed','Спальня','Bedroom'],['home','Удобства дома','Building & home'],['safety','Безопасность','Safety'],['service','Сервис','Services']];
+const AMEN_CAT = [
+  ['wifi','tech','wifi','Wi‑Fi','Wi‑Fi'],['tv','tech','play','Телевизор','TV'],['ac','tech','moon','Кондиционер','Air conditioning'],['heating','tech','bolt','Отопление','Heating'],['workspace','tech','list','Рабочее место','Workspace'],
+  ['kitchen','kitchen','home','Кухня','Kitchen'],['fridge','kitchen','drop','Холодильник','Fridge'],['microwave','kitchen','bolt','Микроволновка','Microwave'],['stove','kitchen','bolt','Плита','Stove'],['oven','kitchen','bolt','Духовка','Oven'],['kettle','kitchen','drop','Чайник','Kettle'],['coffee','kitchen','drop','Кофеварка','Coffee maker'],['dishes','kitchen','list','Посуда','Dishes'],['dishwasher','kitchen','washer','Посудомоечная машина','Dishwasher'],
+  ['washer','bath','home','Стиральная машина','Washing machine'],['dryer','bath','washer','Сушилка','Dryer'],['hairdryer','bath','drop','Фен','Hair dryer'],['towels','bath','sparkle','Полотенца','Towels'],
+  ['linen','bed','bed','Постельное бельё','Bed linen'],['iron','bed','bolt','Утюг','Iron'],['ironboard','bed','sofa','Гладильная доска','Ironing board'],['crib','bed','baby','Детская кроватка','Baby crib'],
+  ['balcony','home','building','Балкон','Balcony'],['parking','home','parking','Парковка','Parking'],['parking_near','home','car','Парковка рядом','Parking nearby'],['elevator','home','luggage','Лифт','Elevator'],
+  ['smoke','safety','alert','Дымовой датчик','Smoke detector'],['firstaid','safety','shield','Аптечка','First aid kit'],
+  ['checkin24','service','key','Заселение 24/7 по коду','24/7 self check-in with a code'],['cleaning','service','sparkle','Уборка с фотоотчётом','Cleaning with photo report'],['transfer','service','plane','Трансфер из NQZ','NQZ airport transfer']
+].map(([id,group,icon,ru,en])=>({id,group,icon,ru,en}));
+/* короткие подписи на карточке — как было раньше */
+const AMEN_SHORT = {checkin24:['Заселение 24/7','24/7 check-in']};
+const AMEN_MAIN = ['wifi','checkin24','parking','parking_near','cleaning','ac','washer','balcony','transfer'];
+const amenCatalog = st => AMEN_CAT.concat(((st||Store.load()).amenCustom||[]).map(c=>({id:c.id, group:c.group, icon:'flag', ru:c.name, en:c.name, custom:true})));
+function defaultAptInfo(a){ const parking=a.id%3!==0, ac=a.id%4!==1, balcony=a.id%2===0;
+  return {amen:['wifi','checkin24',parking?'parking':'parking_near','cleaning'].concat(ac?['ac']:[],['washer'],balcony?['balcony']:[],['transfer']), wifiSpeed:'200 Мбит/с',
+    rules:{ci:'14:00', co:'12:00', early:true, pets:aptPets(a).allowed, parties:false, smoking:'no', quiet:true, quietFrom:'23:00', quietTo:'08:00', deposit:0}}; }
+function petsOn(a){ return {allowed:true, fee: a.id%2===0 ? PET_FEE : 0, weight: (a.id%4===1||a.rooms==='Студия') ? tx('до 10 кг') : tx('до 25 кг'), count: (a.rooms==='Студия'||a.rooms==='1-комн.') ? 1 : 2}; }
+function applyAptInfo(a, st){ st = st || Store.load(); const d = defaultAptInfo(a), o = (st.aptInfo||{})[a.id] || {};
+  const info = {amen: Array.isArray(o.amen) ? o.amen.slice() : d.amen, wifiSpeed: o.wifiSpeed!==undefined ? o.wifiSpeed : d.wifiSpeed, rules: Object.assign({}, d.rules, o.rules||{})};
+  a.info = info; a.parking = info.amen.includes('parking'); a.ac = info.amen.includes('ac'); a.balcony = info.amen.includes('balcony');
+  a.pets = info.rules.pets ? (aptPets(a).allowed ? aptPets(a) : petsOn(a)) : {allowed:false}; return a; }
+{ const st0 = Store.load(); guestApts.forEach(a=>applyAptInfo(a, st0)); }
+function amenLabel(c, a){ if(c.id==='wifi'){ const sp=(a.info.wifiSpeed||'').trim(); return sp ? `Wi‑Fi ${IS_EN?sp.replace(/Мбит\/с/,'Mbps'):sp}` : 'Wi‑Fi'; }
+  const sh = AMEN_SHORT[c.id]; return sh ? L2(sh[0],sh[1]) : L2(c.ru,c.en); }
+function amenItem(c, a){ return c.id==='transfer' ? `<a href="#transfer" data-close class="amen-l">${ic(c.icon,18)} ${esc(amenLabel(c,a))}</a>` : `<span>${ic(c.icon,18)} ${esc(amenLabel(c,a))}</span>`; }
+function aptAmen(a){ const cat = amenCatalog(), on = new Set(a.info.amen); return cat.filter(c=>on.has(c.id)); }
+function amenHTML(a){ const L = aptAmen(a), rank = c => { const i = AMEN_MAIN.indexOf(c.id); return i<0 ? 100 + AMEN_CAT.indexOf(c) : i; };
+  const main = L.slice().sort((x,y)=>rank(x)-rank(y)).slice(0,8);
+  return `<div class="amen">${main.map(c=>amenItem(c,a)).join('')}</div>${L.length>8?`<button type="button" class="btn sm amen-all" data-amenall>${L2('Показать все удобства','Show all amenities')} (${L.length})</button>`:''}`; }
+function amenAllHTML(a){ const L = aptAmen(a);
+  return AMEN_GROUPS.map(([g,ru,en])=>{ const it = L.filter(c=>c.group===g); return it.length ? `<h4>${L2(ru,en)}</h4><div class="amen">${it.map(c=>`<span>${ic(c.icon,18)} ${esc(c.id==='checkin24'?L2(c.ru,c.en):amenLabel(c,a))}</span>`).join('')}</div>` : ''; }).join(''); }
+function rulesHTML(a){ const r = a.info.rules;
+  const ci = `${L2('Заезд с','Check-in from')} ${r.ci}, ${L2('выезд до','check-out by')} ${r.co}`;
+  const ciSub = r.early ? L2('Самостоятельное заселение по коду, ранний заезд — по запросу.','Self check-in with a code; early check-in on request.') : L2('Самостоятельное заселение по коду, ранний заезд не предусмотрен.','Self check-in with a code; no early check-in.');
+  const P = r.parties, S = r.smoking;
+  const pb = !P && S==='no' ? L2('Без вечеринок и курения','No parties or smoking')
+    : (P ? L2('Вечеринки можно','Parties allowed') : L2('Без вечеринок','No parties')) + ', ' + (S==='no' ? L2('без курения','no smoking') : S==='balcony' ? L2('курение на балконе','smoking on the balcony') : L2('курить можно','smoking allowed'));
+  const q = r.quiet ? (IS_EN ? `Quiet hours ${r.quietFrom}–${r.quietTo}` : `Тишина с ${r.quietFrom} до ${r.quietTo}`) : L2('Без тихих часов','No quiet hours');
+  const dep = +r.deposit>0 ? (IS_EN ? `deposit ${money(+r.deposit)}.` : `залог ${money(+r.deposit)}.`) : L2('залог не берём.','no deposit.');
+  return `<div class="rules"><div class="rule"><span class="ri">${ic('clock',17)}</span><div><b>${ci}</b><span>${ciSub}</span></div></div>
+        ${petRuleHTML(a)}
+        <div class="rule"><span class="ri">${ic('shield',17)}</span><div><b>${pb}</b><span>${q}, ${dep}</span></div></div></div>`; }
 const nightBusy = (aptId, d) => bookings.some(b=>b.aptId===aptId && b.ci<=d && d<b.co) || blocks.some(b=>b.aptId===aptId && b.from<=d && d<b.to) || (ST.requests||[]).some(r=>r.type!=='transfer' && r.aptId===aptId && r.status!=='cancelled' && r.ci<=d && d<r.co);
 const rangeFree = (aptId, ci, co) => { for(let d=ci; d<co; d++) if(nightBusy(aptId,d)) return false; return true; };
 const nightsWord = n => `${n} ${plural(n,tx('ночь'),tx('ночи'),tx('ночей'))}`;
@@ -497,11 +545,9 @@ function renderModal(){
       <h2 style="margin:6px 0 8px">${esc(a.title)}</h2>
       <div class="feat" style="font-size:14px"><span class="rt">${ic('star',15)} ${aptRating(a)} <small>· ${a.reviews} ${tx("отзывов")}</small></span><span>${ic('bed',15)} ${tx(a.rooms)}</span><span>${ic('users',15)} ${tx("до")} ${guestsWord(a.maxGuests)}</span><span>${ic('home',15)} ${a.area} ${tx("м²")}</span>${a.pets.allowed?`<span class="pawt">${ic('paw',15)} ${tx("можно с животными")}</span>`:''}</div>
       <p style="color:var(--ink2);margin:14px 0 0">${tx("Светлая")} ${a.rooms==='Студия'?tx('студия'):ROOMS_FULL[a.rooms].toLowerCase()+tx(' квартира')} ${tx("в")} ${esc(tx(a.complex))}, ${a.near}${tx(". Полностью оборудованная кухня, свежее бельё и полотенца, быстрый Wi‑Fi. Самостоятельное заселение по коду в любое время.")}</p>
-      <div class="amen"><span>${ic('wifi',18)} ${tx("Wi‑Fi 200 Мбит/с")}</span><span>${ic('key',18)} ${tx("Заселение 24/7")}</span>${a.parking?`<span>${ic('parking',18)} ${tx("Парковка")}</span>`:`<span>${ic('car',18)} ${tx("Парковка рядом")}</span>`}<span>${ic('sparkle',18)} ${tx("Уборка с фотоотчётом")}</span>${a.ac?`<span>${ic('moon',18)} ${tx("Кондиционер")}</span>`:''}<span>${ic('home',18)} ${tx("Стиральная машина")}</span>${a.balcony?`<span>${ic('building',18)} ${tx("Балкон")}</span>`:''}<a href="#transfer" data-close class="amen-l">${ic('plane',18)} ${tx("Трансфер из NQZ")}</a></div>
+      ${amenHTML(a)}
       <h3 class="rh">${tx("Правила проживания")}</h3>
-      <div class="rules"><div class="rule"><span class="ri">${ic('clock',17)}</span><div><b>${tx("Заезд с 14:00, выезд до 12:00")}</b><span>${tx("Самостоятельное заселение по коду, ранний заезд — по запросу.")}</span></div></div>
-        ${petRuleHTML(a)}
-        <div class="rule"><span class="ri">${ic('shield',17)}</span><div><b>${tx("Без вечеринок и курения")}</b><span>${tx("Тишина с 23:00 до 08:00, залог не берём.")}</span></div></div></div>
+      ${rulesHTML(a)}
       <div class="demo-note">${ic('alert',16)}<span>${tx("Фото — иллюстрации, квартира и отзывы вымышленные (демо).")}</span></div>
     </div>
     <aside class="bookbox"><div style="display:flex;align-items:baseline;justify-content:space-between"><div><b style="font-size:22px">${gmN(a)}</b> <span class="muted">${tx("/ ночь")}</span></div><span class="rt">${ic('star',14)} ${aptRating(a)}</span></div>
@@ -807,5 +853,5 @@ syncSearch(); renderGrid();
 const qs = new URLSearchParams(location.search);
 const qa = +qs.get('apt'); if(qa) openApt(qa);
 if(qs.get('transfer')) openTrOrder(['from','to','round'].includes(qs.get('transfer'))?qs.get('transfer'):'from');
-window.__guest = {G, M, TR, PK, openApt, openTrOrder, openDP, photo, photoList, aptPhotos, capOf, gById, guestApts, renderGrid, toast};
+window.__guest = {G, M, TR, PK, openApt, openTrOrder, openDP, AMEN_GROUPS, AMEN_CAT, amenCatalog, defaultAptInfo, applyAptInfo, amenAllHTML, L2, photo, photoList, aptPhotos, capOf, gById, guestApts, renderGrid, toast};
 })();
