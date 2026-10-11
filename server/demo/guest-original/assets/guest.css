@@ -559,3 +559,64 @@ footer.site{background:#121316}
 .apt .ph img.real,.mini-apt .th img.real{display:block;width:100%;height:100%;object-fit:cover}
 .mgal img.real{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center 40%}
 .mgal .cnt{position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:3px 9px;border-radius:999px}
+
+/* ---------- адаптивная галерея квартиры: 2×2 на десктопе, слайдер на мобильном ---------- */
+.pgal{background:#fff;padding:8px 8px 0}
+.pgal .pc,.pgal .pbig,.pgal .pth{position:relative;overflow:hidden;border-radius:12px;background:#eef1f3;cursor:zoom-in}
+.pgal svg,.pgal img.real{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.pgal img.real:not(.up){object-position:center 40%}
+.pgal .pc img,.pgal .pc svg{transition:transform .35s}
+.pgal .pc:hover img,.pgal .pc:hover svg{transform:scale(1.03)}
+.pgal .cap,.pgal .cnt{position:absolute;bottom:10px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:3px 9px;border-radius:999px;pointer-events:none}
+.pgal .cap{left:10px}.pgal .cnt{right:10px}
+.pgal .more{position:absolute;inset:0;display:grid;place-items:center;background:rgba(16,33,43,.55);color:#fff;font-weight:700;font-size:17px;letter-spacing:.2px;pointer-events:none}
+.pgal .pgrid{display:grid;gap:8px;height:360px;grid-template-columns:2fr 1fr 1fr;grid-template-rows:1fr 1fr}
+.pgal .pgrid .big{grid-row:1/3;grid-column:1/2;box-shadow:0 1px 2px rgba(16,33,43,.06)}
+.pgal .pgrid .s1{grid-column:2/4;grid-row:1}
+.pgal .pgrid .s2{grid-column:2/3;grid-row:2}
+.pgal .pgrid .s3{grid-column:3/4;grid-row:2}
+.pgal.n1 .pgrid{grid-template-columns:1fr;grid-template-rows:1fr}.pgal.n1 .pgrid .big{grid-column:1;grid-row:1}
+.pgal.n2 .pgrid{grid-template-columns:2fr 1fr;grid-template-rows:1fr}.pgal.n2 .pgrid .big{grid-row:1}.pgal.n2 .pgrid .s1{grid-column:2;grid-row:1}
+.pgal.n3 .pgrid{grid-template-columns:2fr 1fr}.pgal.n3 .pgrid .s1{grid-column:2;grid-row:1}.pgal.n3 .pgrid .s2{grid-column:2;grid-row:2}
+.pgal .pslide{display:none}
+@media (max-width:768px){
+  .pgal{padding:0}
+  .pgal .pgrid{display:none}
+  .pgal .pslide{display:block}
+  .pgal .pbig{border-radius:0;aspect-ratio:4/3;max-height:62vh;width:100%;touch-action:pan-y}
+  .pgal .pthumbs{display:flex;gap:6px;overflow-x:auto;padding:8px 10px;scroll-snap-type:x proximity;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .pgal .pthumbs::-webkit-scrollbar{display:none}
+  .pgal .pth{flex:0 0 68px;height:51px;border:2px solid transparent;padding:0;scroll-snap-align:center;opacity:.7;cursor:pointer;transition:opacity .15s,border-color .15s}
+  .pgal .pth.on{border-color:var(--brand);opacity:1;box-shadow:0 2px 8px rgba(16,33,43,.18)}
+}
+/* полноэкранный просмотр: фото не обрезаются (contain) */
+body.pv-open{overflow:hidden}
+#pview{position:fixed;inset:0;z-index:300;background:rgba(10,14,18,.94);display:flex;align-items:center;justify-content:center}
+#pview[hidden]{display:none}
+#pview .pv-stage{position:absolute;inset:56px 70px 24px;display:flex;align-items:center;justify-content:center;touch-action:pan-y}
+#pview .pv-stage img,#pview .pv-stage svg{position:static;max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;border-radius:6px}
+#pview .pv-top{position:absolute;top:0;left:0;right:0;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 14px 0 20px;color:#fff;font-size:14px}
+#pview .pv-x,#pview .pv-nav{border:0;background:rgba(255,255,255,.12);color:#fff;border-radius:999px;display:grid;place-items:center;cursor:pointer;transition:background .15s}
+#pview .pv-x{width:42px;height:42px}#pview .pv-x:hover,#pview .pv-nav:hover{background:rgba(255,255,255,.24)}
+#pview .pv-nav{position:absolute;top:50%;transform:translateY(-50%);width:48px;height:48px;z-index:1}
+#pview .pv-nav.prev{left:12px}#pview .pv-nav.next{right:12px}#pview .pv-nav.next svg{transform:rotate(180deg)}
+#pview.single .pv-nav{display:none}
+@media (max-width:768px){#pview .pv-stage{inset:56px 0 16px}#pview .pv-nav{width:40px;height:40px;background:rgba(0,0,0,.35)}#pview .pv-nav.prev{left:6px}#pview .pv-nav.next{right:6px}}
+/* редактор фото (владелец/админ) */
+#peditor{position:fixed;inset:0;z-index:250;background:var(--bg);overflow:auto;padding:24px 16px}
+#peditor[hidden]{display:none}
+.pe-card{max-width:1080px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:22px}
+.pe-login{max-width:460px}
+.pe-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.pe-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:10px 0}
+.pe-up{cursor:pointer}
+.pe-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:10px}
+.pe-it{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;box-shadow:0 1px 2px rgba(16,33,43,.05)}
+.pe-it.main{border-color:var(--accent);box-shadow:0 0 0 2px rgba(224,165,38,.35)}
+.pe-ph{position:relative;aspect-ratio:4/3;background:#eef1f3}
+.pe-ph svg,.pe-ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.pe-badge{position:absolute;left:8px;top:8px;background:var(--accent);color:#fff;font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px}
+.pe-act{display:flex;gap:6px;padding:8px;flex-wrap:wrap}
+.pe-act .btn.sm{height:32px;padding:0 10px;font-size:13px}
+.pe-act .pe-del{color:var(--bad);margin-left:auto}
+.pe-act .btn[disabled]{opacity:.45;cursor:not-allowed}

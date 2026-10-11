@@ -61,9 +61,14 @@ const timeOpts = (v, ph) => `<option value="">${ph||'--:--'}</option>` + TIMES.m
 
 /* ---------- фото квартиры: у квартир в ЖК Хайвил первое фото — настоящий дом (блок G-1), остальные — иллюстрации интерьера ---------- */
 const BUILDING_PHOTO = 'assets/photos/highvill-g1-800.jpg';
-const photoList = a => a.embassy ? ['b',0,1,2] : [0,1,2];
-const coverKey = a => a.embassy ? 'b' : a.id%3;
+/* фото квартиры — массив a.photos (порядок задаёт владелец/админ в #photos, первое = главное);
+   элемент: 'b' (дом), 0/1/2 (иллюстрации) или URL/data:URL загруженного фото */
+const defaultPhotos = a => a.embassy ? ['b',0,1,2] : [0,1,2].map(k=>(a.id+k)%3);
+function aptPhotos(a){ const ov = (Store.load().aptPhotos||{})[a.id]; const L = Array.isArray(ov)&&ov.length ? ov : defaultPhotos(a); a.photos = L; return L; }
+const photoList = a => aptPhotos(a);
+const coverKey = a => aptPhotos(a)[0];
 function photo(a, v, key){
+  if(typeof v==='string' && v!=='b') return `<img class="real up" src="${esc(v)}" alt="${esc(tx('Фото квартиры'))}" loading="lazy" decoding="async">`;
   if(v==='b'){ const pos = key && key[0]==='g' ? ['50% 28%','50% 62%','38% 45%','62% 38%','50% 80%'][a.id%5] : '50% 40%';
     return `<img class="real" src="${BUILDING_PHOTO}" alt="${esc(tx('Дом'))}: ${esc(tx(a.complex))}" loading="lazy" decoding="async" style="object-position:${pos}">`; }
   const h = a.pal[0], s = a.pal[1];
@@ -461,10 +466,14 @@ function sumHTML(){ const t=totals(); if(!t.n) return `<div class="sum muted">${
   return `<div class="sum"><div class="ln"><span>${gmN(M.apt)} × ${nightsWord(t.n)}</span><span>${fc(t.cStay)}</span></div>${TR.bk.on?`<div class="ln"><span>${tx("Трансфер:")} ${P.dirs[TR.bk.dir].toLowerCase()}${TR.bk.place==='station'&&TR.bk.dir==='round'?tx(' (вокзал)'):''}</span><span>${fc(t.cTr)}</span></div>`:''}${M.pet&&M.apt.pets.allowed?`<div class="ln"><span>${ic('paw',13)} ${tx("Проживание с животным")}</span><span>${t.pet?fc(t.cPet):tx('<span style="color:var(--ok)">бесплатно</span>')}</span></div>`:''}<div class="ln"><span>${tx("Сервисный сбор")}</span><span style="color:var(--ok)">${fc(0)}</span></div><div class="ln tot"><span>${tx("Итого")}</span><span>${fc(t.cTotal)}</span></div></div>`; }
 function selText(){ const t=totals(); return M.ci!=null?(M.co!=null?`${fDL(M.ci)} → ${fDL(M.co)} · ${nightsWord(t.n)}`:`${tx("Заезд")} ${fDL(M.ci)} ${tx("— выберите дату выезда")}`):''; }
 const CAPS=[tx('Гостиная'),tx('Спальня'),tx('Кухня')];
-const capOf = v => v==='b' ? tx('Дом') : CAPS[v];
+const capOf = v => v==='b' ? tx('Дом') : typeof v==='string' ? tx('Фото') : CAPS[v];
 function galleryHTML(a){
-  const L = photoList(a), i0 = M.photo % L.length, v0 = L[i0];
-  return `<div class="mgal"><div class="big" data-photo="${(i0+1)%L.length}" style="cursor:pointer" title="${esc(tx('Следующее фото'))}">${photo(a,v0,'m0')}<span class="cap">${capOf(v0)}${v0==='b'?'':' '+tx("· иллюстрация")}</span>${L.length>3?`<span class="cnt">${i0+1} / ${L.length}</span>`:''}</div><div class="side">${[1,2].map(k=>{ const i=(i0+k)%L.length, v=L[i]; return `<div class="sm2" data-photo="${i}" style="cursor:pointer">${photo(a,v,'m'+k)}<span class="cap">${capOf(v)}</span></div>`; }).join('')}</div></div>`;
+  const L = photoList(a), N = L.length, cur = Math.min(M.photo||0, N-1);
+  const cap = v => `<span class="cap">${capOf(v)}${v==='b'||typeof v==='string'?'':' '+tx("· иллюстрация")}</span>`;
+  const sm = L.slice(1,4).map((v,k)=>{ const i=k+1, more = i===3 && N>4 ? `<span class="more">+${N-4} ${tx("фото")}</span>` : '';
+    return `<div class="pc s${i}" data-photo="${i}">${photo(a,v,'m'+i)}${more?'':cap(v)}${more}</div>`; }).join('');
+  return `<div class="pgal n${Math.min(N,4)}"><div class="pgrid"><div class="pc big" data-photo="0">${photo(a,L[0],'m0')}${cap(L[0])}${N>1?`<span class="cnt">${N} ${tx("фото")}</span>`:''}</div>${sm}</div>
+    <div class="pslide"><div class="pbig" data-photo="${cur}">${photo(a,L[cur],'s0')}${cap(L[cur])}${N>1?`<span class="cnt">${cur+1} / ${N}</span>`:''}</div>${N>1?`<div class="pthumbs">${L.map((v,i)=>`<button type="button" class="pth ${i===cur?'on':''}" data-gthumb="${i}" aria-label="${tx("Фото")} ${i+1}">${photo(a,v,'t'+i)}</button>`).join('')}</div>`:''}</div></div>`;
 }
 function miniApt(a,key,sub){ return `<div class="mini-apt"><div class="th">${photo(a,coverKey(a),key)}</div><div><b style="font-size:14.5px">${esc(a.title)}</b><div class="muted" style="font-size:12.5px">${sub}</div></div></div>`; }
 function dateFieldsHTML(attr){
@@ -708,7 +717,8 @@ document.addEventListener('click', e=>{
   if(t.closest('[data-petchip]')){ setSearch('pets', !G.pets); return; }
   if(t.closest('[data-petperk]')){ e.preventDefault(); setSearch('pets', true); $('catalog').scrollIntoView({behavior:'smooth'}); toast(tx('Показываем квартиры, где можно с животными')); return; }
   if(t.closest('[data-reset]')){ Object.assign(G,{ci:null,co:null,guests:1,district:'',maxPrice:0,rooms:'',pets:false}); syncSearch(); renderGrid(); return; }
-  const ph=t.closest('[data-photo]'); if(ph){ M.photo=+ph.dataset.photo; document.querySelector('.mgal').outerHTML = galleryHTML(M.apt); return; }
+  const gt=t.closest('[data-gthumb]'); if(gt){ setSlide(+gt.dataset.gthumb); return; }
+  const ph=t.closest('[data-photo]'); if(ph){ openViewer(M.apt, +ph.dataset.photo); return; }
   /* бронь */
   if(t.closest('[data-to-form]')){ if(!totals().n){ openDP('apt','ci', M.apt.title, tx('Зачёркнутые дни заняты · ')+gmN(M.apt)+tx(' за ночь')); return; } M.step='form'; renderModal(); $('modal').scrollTop=0; return; }
   const back=t.closest('[data-back]'); if(back){ if(M.step==='form') readForm(); if(M.step==='trcard') {} M.step=back.dataset.back; renderModal(); return; }
@@ -786,5 +796,5 @@ syncSearch(); renderGrid();
 const qs = new URLSearchParams(location.search);
 const qa = +qs.get('apt'); if(qa) openApt(qa);
 if(qs.get('transfer')) openTrOrder(['from','to','round'].includes(qs.get('transfer'))?qs.get('transfer'):'from');
-window.__guest = {G, M, TR, PK, openApt, openTrOrder, openDP};
+window.__guest = {G, M, TR, PK, openApt, openTrOrder, openDP, photo, photoList, aptPhotos, capOf, gById, guestApts, renderGrid, toast};
 })();
